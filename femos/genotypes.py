@@ -26,7 +26,7 @@ class SimpleGenotype:
 
     def mutate(self, mean, standard_deviation):
 
-        for index in range(self.weights):
+        for index in range(len(self.weights)):
             self.weights[index] = self.weights[index] + gauss(mean, standard_deviation)
 
 
@@ -62,7 +62,7 @@ class UncorrelatedOneStepSizeGenotype:
         self.mutation_step_size = self.mutation_step_size * exp(tau1 * gauss(0, 1))
 
         # Then mutate neural network weights
-        for index in range(self.weights):
+        for index in range(len(self.weights)):
             self.weights[index] = self.weights[index] + self.mutation_step_size * gauss(0, 1)
 
 
@@ -97,11 +97,11 @@ class UncorrelatedNStepSizeGenotype:
 
         # First mutate current mutation step sizes
         nonuniform_random_number = gauss(0, 1)
-        for index in range(self.mutation_step_sizes):
+        for index in range(len(self.mutation_step_sizes)):
             self.mutation_step_sizes[index] * exp(tau1 * nonuniform_random_number + tau2 * gauss(0, 1))
 
         # Then mutate neural network weights
-        for index in range(self.weights):
+        for index in range(len(self.weights)):
             self.weights[index] = self.weights[index] + self.mutation_step_sizes[index] * gauss(0, 1)
 
 
