@@ -78,7 +78,7 @@ class UncorrelatedNStepSizeGenotype:
         weights = get_random_numbers(number_of_nn_weights, weight_lower_threshold, weight_upper_threshold)
         mutation_step_sizes = get_random_numbers(number_of_nn_weights, mutation_step_size_lower_threshold,
                                                  mutation_step_size_upper_threshold)
-        return UncorrelatedOneStepSizeGenotype(weights, mutation_step_sizes)
+        return UncorrelatedNStepSizeGenotype(weights, mutation_step_sizes)
 
     @staticmethod
     def get_random_genotypes(number_of_genotypes, number_of_nn_weights, weight_lower_threshold, weight_upper_threshold,
