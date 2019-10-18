@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.0.1",
     author="estissy",
     author_email="estissy@gmail.com",
-    description="Library for neuroevolution",
+    description="My small library for neuroevolution",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/estissy/femos",
