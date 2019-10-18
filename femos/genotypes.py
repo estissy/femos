@@ -24,10 +24,15 @@ class SimpleGenotype:
 
         return genotypes
 
-    def mutate(self, mean, standard_deviation):
+    @staticmethod
+    def get_mutated_genotype(genotype, mean, standard_deviation):
+        number_of_nn_weights = len(genotype.weights)
 
-        for index in range(len(self.weights)):
-            self.weights[index] = self.weights[index] + gauss(mean, standard_deviation)
+        new_weights = [0] * number_of_nn_weights
+        for index in range(number_of_nn_weights):
+            new_weights[index] = genotype.weights[index] + gauss(mean, standard_deviation)
+
+        return SimpleGenotype(new_weights)
 
 
 class UncorrelatedOneStepSizeGenotype:
@@ -56,14 +61,19 @@ class UncorrelatedOneStepSizeGenotype:
 
         return genotypes
 
-    def mutate(self, tau1):
+    @staticmethod
+    def get_mutated_genotype(genotype, tau1):
+        number_of_nn_weights = len(genotype.weights)
 
         # First mutate current mutation step size
-        self.mutation_step_size = self.mutation_step_size * exp(tau1 * gauss(0, 1))
+        new_mutation_step_size = genotype.mutation_step_size * exp(tau1 * gauss(0, 1))
 
         # Then mutate neural network weights
-        for index in range(len(self.weights)):
-            self.weights[index] = self.weights[index] + self.mutation_step_size * gauss(0, 1)
+        new_weights = [0] * number_of_nn_weights
+        for index in range(number_of_nn_weights):
+            new_weights[index] = genotype.weights[index] + new_mutation_step_size * gauss(0, 1)
+
+        return UncorrelatedOneStepSizeGenotype(new_weights, new_mutation_step_size)
 
 
 class UncorrelatedNStepSizeGenotype:
@@ -93,16 +103,21 @@ class UncorrelatedNStepSizeGenotype:
 
         return genotypes
 
-    def mutate(self, tau1, tau2):
+    @staticmethod
+    def get_mutated_genotype(genotype, tau1, tau2):
+        number_of_nn_weights = len(genotype.weights)
 
         # First mutate current mutation step sizes
         nonuniform_random_number = gauss(0, 1)
-        for index in range(len(self.mutation_step_sizes)):
-            self.mutation_step_sizes[index] * exp(tau1 * nonuniform_random_number + tau2 * gauss(0, 1))
+        new_mutation_step_sizes = [0] * number_of_nn_weights
+        new_weights = [0] * number_of_nn_weights
 
-        # Then mutate neural network weights
-        for index in range(len(self.weights)):
-            self.weights[index] = self.weights[index] + self.mutation_step_sizes[index] * gauss(0, 1)
+        for index in range(number_of_nn_weights):
+            new_mutation_step_sizes[index] = genotype.mutation_step_sizes[index] * exp(
+                tau1 * nonuniform_random_number + tau2 * gauss(0, 1))
+            new_weights[index] = genotype.weights[index] + new_mutation_step_sizes[index] * gauss(0, 1)
+
+        return UncorrelatedNStepSizeGenotype(new_weights, new_mutation_step_sizes)
 
 
 class CorrelatedNStepSizeGenotype:

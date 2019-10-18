@@ -1,5 +1,3 @@
-from copy import copy
-
 from femos.genotypes import SimpleGenotype, UncorrelatedOneStepSizeGenotype, UncorrelatedNStepSizeGenotype
 
 
@@ -26,7 +24,7 @@ def test_simple_genotype_get_random_genotypes():
         assert type(element) is SimpleGenotype
 
 
-def test_simple_genotype_mutation():
+def test_simple_genotype_get_mutated_genotype():
     number_of_nn_weights = 20
     weight_lower_threshold = -1
     weight_upper_threshold = 1
@@ -35,12 +33,13 @@ def test_simple_genotype_mutation():
 
     random_simple_genotype = SimpleGenotype.get_random_genotype(number_of_nn_weights, weight_lower_threshold,
                                                                 weight_upper_threshold)
-    random_simple_genotype_weights = copy(random_simple_genotype.weights)
+    mutated_simple_genotype = SimpleGenotype.get_mutated_genotype(random_simple_genotype, 0, 0.3)
 
-    random_simple_genotype.mutate(mutation_mean, mutation_standard_deviation)
+    assert random_simple_genotype != mutated_simple_genotype
+    assert len(mutated_simple_genotype.weights) == number_of_nn_weights
 
     for index in range(number_of_nn_weights):
-        assert random_simple_genotype_weights[index] != random_simple_genotype.weights[index]
+        assert random_simple_genotype.weights[index] != mutated_simple_genotype.weights[index]
 
 
 def test_uncorrelated_one_step_size_genotype_get_random_genotype():
@@ -98,16 +97,14 @@ def test_uncorrelated_one_step_size_genotype_mutation():
                                                                                mutation_step_size_lower_threshold,
                                                                                mutation_step_size_upper_threshold)
 
-    random_uoss_genotype_weights = copy(random_uoss_genotype.weights)
-    random_uoss_genotype_mutation_step_size = random_uoss_genotype.mutation_step_size
+    mutated_random_uoss_genotype = UncorrelatedOneStepSizeGenotype.get_mutated_genotype(random_uoss_genotype,
+                                                                                        mutation_tau1)
 
-    random_uoss_genotype.mutate(mutation_tau1)
+    assert random_uoss_genotype != mutated_random_uoss_genotype
+    assert len(mutated_random_uoss_genotype.weights) == number_of_nn_weights
 
-    assert len(random_uoss_genotype.weights) == number_of_nn_weights
     for index in range(number_of_nn_weights):
-        assert random_uoss_genotype_weights[index] != random_uoss_genotype.weights[index]
-
-    assert random_uoss_genotype_mutation_step_size != random_uoss_genotype.mutation_step_size
+        assert random_uoss_genotype.weights[index] != mutated_random_uoss_genotype.weights[index]
 
 
 def test_uncorrelated_n_step_size_genotype_get_random_genotype():
@@ -169,11 +166,11 @@ def test_uncorrelated_n_step_size_genotype_mutation():
                                                                              mutation_step_size_lower_threshold,
                                                                              mutation_step_size_upper_threshold)
 
-    random_unss_genotype_weights = copy(random_unss_genotype.weights)
-    random_unss_genotype_mutation_step_sizes = copy(random_unss_genotype.mutation_step_sizes)
+    mutated_random_unss_genotype = UncorrelatedNStepSizeGenotype.get_mutated_genotype(random_unss_genotype,
+                                                                                      mutation_tau1, mutation_tau2)
 
-    random_unss_genotype.mutate(mutation_tau1, mutation_tau2)
+    assert random_unss_genotype != mutated_random_unss_genotype
+    assert len(mutated_random_unss_genotype.weights) == number_of_nn_weights
 
     for index in range(number_of_nn_weights):
-        assert random_unss_genotype_weights != random_unss_genotype.weights[index]
-        assert random_unss_genotype_mutation_step_sizes != random_unss_genotype.mutation_step_sizes[index]
+        assert random_unss_genotype.weights[index] != mutated_random_unss_genotype.weights[index]
