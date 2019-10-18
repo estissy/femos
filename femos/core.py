@@ -28,7 +28,7 @@ def get_next_population(population, phenotype_strategy, evaluation_strategy, par
     parents = map(lambda parent_index: population[parent_index], parent_indices)
 
     mutated_parents = map(mutation_strategy, parents)
-    offspring = offspring_selection_strategy(population, mutated_parents)
+    offspring = offspring_selection_strategy(population, list(mutated_parents))
 
     return offspring
 
@@ -40,3 +40,5 @@ def get_evolved_population(initial_population, phenotype_strategy, evaluation_st
     for number_of_epochs in range(number_of_epochs):
         tmp_population = get_next_population(tmp_population, phenotype_strategy, evaluation_strategy,
                                              parent_selection_strategy, mutation_strategy, offspring_selection_strategy)
+
+    return tmp_population
