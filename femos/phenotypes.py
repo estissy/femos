@@ -27,11 +27,12 @@ class Phenotype:
         weights = genotype.weights
         return Phenotype(weights, input_nodes, hidden_layer_nodes, output_nodes)
 
-    def get_prediction(self, input_values, activation_function=tanh):
-        number_of_layers = len(self.hidden_layers_nodes) + 2
+    @staticmethod
+    def get_prediction(phenotype, input_values, activation_function=tanh):
+        number_of_layers = len(phenotype.hidden_layers_nodes) + 1
 
         result = input_values
         for index in range(number_of_layers):
-            result = activation_function(matmul(result, self.layers[index]))
+            result = activation_function(matmul(result, phenotype.layers[index]))
 
         return result
