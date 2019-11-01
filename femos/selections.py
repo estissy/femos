@@ -1,4 +1,4 @@
-from random import randint
+from random import randint, sample
 
 
 def get_two_size_tournament_parent_selection(individual_values, number_of_individuals):
@@ -15,6 +15,21 @@ def get_two_size_tournament_parent_selection(individual_values, number_of_indivi
             indices[index] = first_individual_index
         else:
             indices[index] = second_individual_index
+
+    return indices
+
+
+def get_n_size_tournament_parent_selection(individual_values, tournament_size, number_of_individuals):
+    indices = [0] * number_of_individuals
+    individuals_indices = list(range(number_of_individuals))
+
+    for index in range(number_of_individuals):
+        selected_individuals = sample(individuals_indices, tournament_size)
+        selected_individual_values = map(lambda individual_index: individual_values[individual_index],
+                                         selected_individuals)
+
+        zipped_values_with_indices = zip(selected_individual_values, selected_individuals)
+        indices[index] = max(list(zipped_values_with_indices))[1]
 
     return indices
 
