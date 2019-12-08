@@ -1,5 +1,6 @@
+from os import path, makedirs
+from pickle import dump, HIGHEST_PROTOCOL
 from random import uniform
-
 
 def get_random_numbers(quantity, lower_threshold, upper_threshold):
     numbers = []
@@ -33,12 +34,37 @@ def get_next_population(population, phenotype_strategy, evaluation_strategy, par
     return offspring
 
 
+def get_population_file_name(number_of_epoch, number_of_prefix_zeros=3, extension=".population"):
+    number_of_epoch_digits = len(str(number_of_epoch))
+    prefix_zeros = number_of_prefix_zeros - number_of_epoch_digits
+
+    file_name_elements = [0] * prefix_zeros + [number_of_epoch]
+    str_file_name_elements = map(str, file_name_elements)
+
+    return ''.join(str_file_name_elements) + extension
+
+
 def get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
-                           mutation_strategy, offspring_selection_strategy, number_of_epochs):
+                           mutation_strategy, offspring_selection_strategy, number_of_epochs, backup=None):
     tmp_population = initial_population
 
-    for number_of_epochs in range(number_of_epochs):
+    for number_of_epoch in range(number_of_epochs):
         tmp_population = get_next_population(tmp_population, phenotype_strategy, evaluation_strategy,
                                              parent_selection_strategy, mutation_strategy, offspring_selection_strategy)
+
+        if backup is not None:
+            number_of_epochs_to_backup = backup[0]
+
+            if number_of_epoch % number_of_epochs_to_backup == 0:
+                backup_directory = backup[1]
+                makedirs(backup_directory, exist_ok=True)
+
+                number_of_file_name_prefix_zeros = len(str(number_of_epoch)) + 1
+                file_extension = backup[2]
+                file_name = get_population_file_name(number_of_epoch, number_of_file_name_prefix_zeros, file_extension)
+                backup_path = path.join(backup_directory, file_name)
+
+                with open(backup_path, "wb+") as dump_file:
+                    dump(tmp_population, dump_file, HIGHEST_PROTOCOL)
 
     return tmp_population
