@@ -34,6 +34,9 @@ class SimpleGenotype:
 
         return SimpleGenotype(new_weights)
 
+    def __eq__(self, other):
+        return self.weights == other.weights
+
 
 class UncorrelatedOneStepSizeGenotype:
 
@@ -74,6 +77,9 @@ class UncorrelatedOneStepSizeGenotype:
             new_weights[index] = genotype.weights[index] + new_mutation_step_size * gauss(0, 1)
 
         return UncorrelatedOneStepSizeGenotype(new_weights, new_mutation_step_size)
+
+    def __eq__(self, other):
+        return self.weights == other.weights and self.mutation_step_size == other.mutation_step_size
 
 
 class UncorrelatedNStepSizeGenotype:
@@ -118,6 +124,9 @@ class UncorrelatedNStepSizeGenotype:
             new_weights[index] = genotype.weights[index] + new_mutation_step_sizes[index] * gauss(0, 1)
 
         return UncorrelatedNStepSizeGenotype(new_weights, new_mutation_step_sizes)
+
+    def __eq__(self, other):
+        return self.weights == other.weights and self.mutation_step_sizes == other.mutation_step_sizes
 
 
 class CorrelatedNStepSizeGenotype:
