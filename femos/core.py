@@ -1,6 +1,19 @@
+from enum import Enum
+from glob import glob
 from os import path, makedirs
-from pickle import dump, HIGHEST_PROTOCOL
+from pickle import dump, HIGHEST_PROTOCOL, load
 from random import uniform
+from statistics import mean, stdev
+from time import time
+
+
+class Summary(Enum):
+    EPOCH = 1,
+    MEAN = 2,
+    STDDEV = 3,
+    POPULATION_SIZE = 4,
+    DURATION = 5,
+
 
 def get_random_numbers(quantity, lower_threshold, upper_threshold):
     numbers = []
@@ -22,6 +35,7 @@ def get_number_of_nn_weights(input_nodes, hidden_layers_nodes, output_nodes):
 
 def get_next_population(population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
                         mutation_strategy, offspring_selection_strategy):
+    start_time = time()
     phenotypes = map(phenotype_strategy, population)
     phenotypes_values = evaluation_strategy(list(phenotypes))
 
@@ -30,8 +44,9 @@ def get_next_population(population, phenotype_strategy, evaluation_strategy, par
 
     mutated_parents = map(mutation_strategy, parents)
     offspring = offspring_selection_strategy(population, list(mutated_parents))
+    end_time = time()
 
-    return offspring
+    return offspring, phenotypes_values, start_time, end_time
 
 
 def get_population_file_name(number_of_epoch, number_of_prefix_zeros=3, extension=".population"):
@@ -44,27 +59,98 @@ def get_population_file_name(number_of_epoch, number_of_prefix_zeros=3, extensio
     return ''.join(str_file_name_elements) + extension
 
 
+def handle_backup(backup_strategy, current_epoch, epochs, population):
+    if backup_strategy is not None:
+        interval = backup_strategy[0]
+
+        if current_epoch % interval == 0:
+            backup_directory = backup_strategy[1]
+            file_extension = backup_strategy[2]
+
+            makedirs(backup_directory, exist_ok=True)
+
+            number_of_file_name_prefix_zeros = len(str(epochs)) + 1
+            file_name = get_population_file_name(current_epoch, number_of_file_name_prefix_zeros, file_extension)
+            backup_path = path.join(backup_directory, file_name)
+
+            with open(backup_path, "wb+") as dump_file:
+                dump(population, dump_file, HIGHEST_PROTOCOL)
+
+
+def handle_backup_load(backup_path, extension):
+    glob_search_string = path.join(backup_path, "*{}".format(extension))
+    backup_files = glob(glob_search_string)
+    sorted_backup_files = sorted(backup_files)
+    last_backup_file = sorted_backup_files[-1]
+
+    with open(last_backup_file, "rb") as loaded_file:
+        population = load(loaded_file)
+
+    return population
+
+
+def get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time):
+    results = {}
+
+    if Summary.EPOCH in summary:
+        results.update({Summary.EPOCH: epoch})
+
+    if Summary.MEAN in summary:
+        results.update({Summary.MEAN: mean(phenotype_values)})
+
+    if Summary.STDDEV in summary:
+        results.update({Summary.STDDEV: stdev(phenotype_values)})
+
+    if Summary.POPULATION_SIZE in summary:
+        population_size = len(phenotype_values)
+        results.update({Summary.POPULATION_SIZE: population_size})
+
+    if Summary.DURATION in summary:
+        duration = end_time - start_time
+        results.update({Summary.DURATION: duration})
+
+    return results
+
+
+def handle_epoch_summary(summary_strategy, epoch, phenotype_values, start_time, end_time):
+    interval = summary_strategy[1]
+
+    if interval % epoch == 0:
+        summary = summary_strategy[0]
+        output = []
+        epoch_summary = get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time)
+
+        if Summary.EPOCH in summary:
+            output.append(str.format('Epoch: {}', epoch_summary[Summary.EPOCH]))
+
+        if Summary.MEAN in summary:
+            output.append(str.format('Mean: {}', epoch_summary[Summary.MEAN]))
+
+        if Summary.STDDEV in summary:
+            output.append(str.format('Stddev: {}', epoch_summary[Summary.STDDEV]))
+
+        if Summary.POPULATION_SIZE in summary:
+            output.append(str.format('Population size: {}', epoch_summary[Summary.POPULATION_SIZE]))
+
+        if Summary.DURATION in summary:
+            output.append(str.format("Duration: {}", epoch_summary[Summary.DURATION]))
+
+        print(' | '.join(output))
+
+
 def get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
-                           mutation_strategy, offspring_selection_strategy, number_of_epochs, backup=None):
+                           mutation_strategy, offspring_selection_strategy, number_of_epochs, backup_strategy=None,
+                           epoch_summary_strategy=None):
     tmp_population = initial_population
 
     for number_of_epoch in range(number_of_epochs):
-        tmp_population = get_next_population(tmp_population, phenotype_strategy, evaluation_strategy,
-                                             parent_selection_strategy, mutation_strategy, offspring_selection_strategy)
+        tmp_population, phenotype_values, start_time, end_time = get_next_population(tmp_population, phenotype_strategy,
+                                                                                     evaluation_strategy,
+                                                                                     parent_selection_strategy,
+                                                                                     mutation_strategy,
+                                                                                     offspring_selection_strategy)
 
-        if backup is not None:
-            number_of_epochs_to_backup = backup[0]
-
-            if number_of_epoch % number_of_epochs_to_backup == 0:
-                backup_directory = backup[1]
-                makedirs(backup_directory, exist_ok=True)
-
-                number_of_file_name_prefix_zeros = len(str(number_of_epoch)) + 1
-                file_extension = backup[2]
-                file_name = get_population_file_name(number_of_epoch, number_of_file_name_prefix_zeros, file_extension)
-                backup_path = path.join(backup_directory, file_name)
-
-                with open(backup_path, "wb+") as dump_file:
-                    dump(tmp_population, dump_file, HIGHEST_PROTOCOL)
+        handle_backup(backup_strategy, number_of_epoch + 1, number_of_epochs, tmp_population)
+        handle_epoch_summary(epoch_summary_strategy, number_of_epoch + 1, phenotype_values, start_time, end_time)
 
     return tmp_population
