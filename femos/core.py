@@ -115,7 +115,7 @@ def get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time):
 def handle_epoch_summary(summary_strategy, epoch, phenotype_values, start_time, end_time):
     interval = summary_strategy[1]
 
-    if interval % epoch == 0:
+    if epoch % interval == 0:
         summary = summary_strategy[0]
         output = []
         epoch_summary = get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time)
