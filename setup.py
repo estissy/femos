@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="femos",
-    version="0.0.6",
+    version="0.0.7",
     author="estissy",
     author_email="estissy@gmail.com",
     description="My small library for neuroevolution",
@@ -17,6 +17,10 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
+    ],
+    install_requires=[
+        'numpy',
+        'humanize'
     ],
     python_requirements=">=3.0",
 )
