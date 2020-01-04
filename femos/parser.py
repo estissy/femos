@@ -4,8 +4,11 @@ from sys import getsizeof
 
 from humanize import naturalsize
 
-from femos.core import get_number_of_nn_weights
+from femos.core import get_number_of_nn_weights, get_evolved_population, Summary
 from femos.genotypes import SimpleGenotype, UncorrelatedOneStepSizeGenotype, UncorrelatedNStepSizeGenotype
+from femos.phenotypes import Phenotype
+from femos.selections import get_two_size_tournament_parent_selection, get_n_size_tournament_parent_selection, \
+    get_age_based_offspring_selection
 
 # Available genotype choices
 simple_genotype_choice = 'simple_genotype'
@@ -27,6 +30,14 @@ summary_duration_choice = 'duration'
 summary_choices = [summary_epoch_choice, summary_mean_choice, summary_stddev_choice, summary_population_size_choice,
                    summary_duration_choice]
 
+summary_lookup = {
+    summary_epoch_choice: Summary.EPOCH,
+    summary_mean_choice: Summary.MEAN,
+    summary_stddev_choice: Summary.STDDEV,
+    summary_population_size_choice: Summary.POPULATION_SIZE,
+    summary_duration_choice: Summary.DURATION
+}
+
 
 def get_evolution_summary(arguments, memory_consumption_probe=100):
     output = [str.format('# Basic summary'), str.format('Genotype: {}', genotype_lookup[arguments.genotype]),
@@ -40,7 +51,7 @@ def get_evolution_summary(arguments, memory_consumption_probe=100):
 
     if arguments.genotype == simple_genotype_choice:
         output.append(str.format('Mutation mean: {}', arguments.mutation_mean))
-        output.append(str.format('Mutation stddev: {}', arguments.mutation_stddev))
+        output.append(str.format('Mutation standard deviation: {}', arguments.mutation_standard_deviation))
 
     if arguments.genotype == uncorrelated_one_step_size_genotype_choice or arguments.genotype == uncorrelated_n_step_size_genotype_choice:
         output.append(
@@ -130,7 +141,7 @@ def get_core_argument_parser():
     parser.add_argument("--tau2", help="Mutation operator parameter - tau2", type=float, default=0.01)
 
     parser.add_argument('--mutation_mean', type=float, default=0)
-    parser.add_argument('--mutation_stddev', type=float, default=0.1)
+    parser.add_argument('--mutation_standard_deviation', type=float, default=0.1)
 
     parser.add_argument('--epoch_summary', action='store_true', default=False)
     parser.add_argument('--epoch_summary_features', type=str, nargs='+', choices=summary_choices,
@@ -141,13 +152,78 @@ def get_core_argument_parser():
     parser.add_argument('--population_backup', action='store_true', default=False)
     parser.add_argument('--population_backup_directory', type=str, default='backups')
     parser.add_argument('--population_backup_interval', type=int, default=5)
-    parser.add_argument('--population_backup_file_extension', type=str, default='population')
+    parser.add_argument('--population_backup_file_extension', type=str, default='.population')
+    parser.add_argument('--dry_run', action='store_true', default=False)
     return parser
 
 
-def handle_evolution_run():
+def handle_evolution_run(evaluation_strategy):
     argument_parser = get_core_argument_parser()
     arguments = argument_parser.parse_args()
     evolution_summary = get_evolution_summary(arguments)
 
     print(evolution_summary)
+    if not arguments.dry_run:
+
+        def phenotype_strategy(genotype):
+            return Phenotype.get_phenotype_from_genotype(genotype, arguments.input_nodes, arguments.hidden_layer_nodes,
+                                                         arguments.output_nodes)
+
+        def parent_selection_strategy(phenotype_values):
+            if arguments.tournament_size == 2:
+                return get_two_size_tournament_parent_selection(phenotype_values, arguments.population_size)
+            else:
+                return get_n_size_tournament_parent_selection(phenotype_values, arguments.tournament_size,
+                                                              arguments.population_size)
+
+        def mutation_strategy(genotype):
+            if arguments.genotype == simple_genotype_choice:
+                return SimpleGenotype.get_mutated_genotype(genotype, arguments.mutation_mean,
+                                                           arguments.mutation_standard_deviation)
+
+            if arguments.genotype == uncorrelated_one_step_size_genotype_choice:
+                return UncorrelatedOneStepSizeGenotype.get_mutated_genotype(genotype, arguments.tau1)
+
+            if arguments.genotype == uncorrelated_n_step_size_genotype_choice:
+                return UncorrelatedNStepSizeGenotype.get_mutated_genotype(genotype, arguments.tau1, arguments.tau2)
+
+        def offspring_selection_strategy(parents, mutated_parents):
+            return get_age_based_offspring_selection(parents, mutated_parents)
+
+        number_of_nn_weights = get_number_of_nn_weights(arguments.input_nodes, arguments.hidden_layer_nodes,
+                                                        arguments.output_nodes)
+        if arguments.genotype == simple_genotype_choice:
+            initial_population = SimpleGenotype.get_random_genotypes(arguments.population_size, number_of_nn_weights,
+                                                                     arguments.weight_lower_threshold,
+                                                                     arguments.weight_upper_threshold)
+
+        if arguments.genotype == uncorrelated_one_step_size_genotype_choice:
+            initial_population = UncorrelatedOneStepSizeGenotype.get_random_genotypes(arguments.population_size,
+                                                                                      number_of_nn_weights,
+                                                                                      arguments.weight_lower_threshold,
+                                                                                      arguments.weight_upper_threshold,
+                                                                                      arguments.mutation_step_size_lower_threshold,
+                                                                                      arguments.mutation_step_size_upper_threshold)
+
+        if arguments.genotype == uncorrelated_n_step_size_genotype_choice:
+            initial_population = UncorrelatedNStepSizeGenotype.get_random_genotypes(arguments.population_size,
+                                                                                    number_of_nn_weights,
+                                                                                    arguments.weight_lower_threshold,
+                                                                                    arguments.weight_upper_threshold,
+                                                                                    arguments.mutation_step_size_lower_threshold,
+                                                                                    arguments.mutation_step_size_upper_threshold)
+
+        population_backup = None
+        if arguments.population_backup:
+            population_backup = [arguments.population_backup_interval, arguments.population_backup_directory,
+                                 arguments.population_backup_file_extension]
+
+        epoch_summary_strategy = None
+        if arguments.epoch_summary:
+            summary_features = list(
+                map(lambda summary_choice: summary_lookup[summary_choice], arguments.epoch_summary_features))
+            epoch_summary_strategy = [summary_features, arguments.epoch_summary_interval]
+
+        return get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
+                                      parent_selection_strategy, mutation_strategy, offspring_selection_strategy,
+                                      arguments.epochs, population_backup, epoch_summary_strategy)

@@ -113,29 +113,30 @@ def get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time):
 
 
 def handle_epoch_summary(summary_strategy, epoch, phenotype_values, start_time, end_time):
-    interval = summary_strategy[1]
+    if summary_strategy is not None:
+        interval = summary_strategy[1]
 
-    if epoch % interval == 0:
-        summary = summary_strategy[0]
-        output = []
-        epoch_summary = get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time)
+        if epoch % interval == 0:
+            summary = summary_strategy[0]
+            output = []
+            epoch_summary = get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time)
 
-        if Summary.EPOCH in summary:
-            output.append(str.format('Epoch: {}', epoch_summary[Summary.EPOCH]))
+            if Summary.EPOCH in summary:
+                output.append(str.format('Epoch: {}', epoch_summary[Summary.EPOCH]))
 
-        if Summary.MEAN in summary:
-            output.append(str.format('Mean: {}', epoch_summary[Summary.MEAN]))
+            if Summary.MEAN in summary:
+                output.append(str.format('Mean: {}', epoch_summary[Summary.MEAN]))
 
-        if Summary.STDDEV in summary:
-            output.append(str.format('Stddev: {}', epoch_summary[Summary.STDDEV]))
+            if Summary.STDDEV in summary:
+                output.append(str.format('Stddev: {}', epoch_summary[Summary.STDDEV]))
 
-        if Summary.POPULATION_SIZE in summary:
-            output.append(str.format('Population size: {}', epoch_summary[Summary.POPULATION_SIZE]))
+            if Summary.POPULATION_SIZE in summary:
+                output.append(str.format('Population size: {}', epoch_summary[Summary.POPULATION_SIZE]))
 
-        if Summary.DURATION in summary:
-            output.append(str.format("Duration: {}", epoch_summary[Summary.DURATION]))
+            if Summary.DURATION in summary:
+                output.append(str.format("Duration: {}", epoch_summary[Summary.DURATION]))
 
-        print(' | '.join(output))
+            print(' | '.join(output))
 
 
 def get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
