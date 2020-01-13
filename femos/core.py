@@ -31,7 +31,7 @@ def get_number_of_nn_weights(input_nodes, hidden_layers_nodes, output_nodes, bia
         total += grouped_nodes[index] * grouped_nodes[index + 1]
 
     if bias_weights:
-        number_of_bias_weights = input_nodes + sum(hidden_layers_nodes) + output_nodes
+        number_of_bias_weights = sum(hidden_layers_nodes) + output_nodes
         total += number_of_bias_weights
 
     return total

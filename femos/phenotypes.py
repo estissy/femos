@@ -20,11 +20,11 @@ class Phenotype:
             self.layers.append(layer_matrix)
 
         if bias_weights:
-            number_of_bias_weights = input_nodes + sum(hidden_layers_nodes) + output_nodes
+            number_of_bias_weights = sum(hidden_layers_nodes) + output_nodes
             bias_weights = weights[weights_offset:weights_offset + number_of_bias_weights]
 
             bias_weights_offset = 0
-            for units in grouped_nodes:
+            for units in grouped_nodes[1:]:
                 selected_bias_weights = bias_weights[bias_weights_offset:bias_weights_offset + units]
                 bias_weights_offset += units
                 bias_matrix = array(selected_bias_weights).reshape(1, units)
