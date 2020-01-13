@@ -63,7 +63,7 @@ def test_get_next_population():
     initial_population = SimpleGenotype.get_random_genotypes(number_of_genotypes, number_of_nn_weights,
                                                              weight_lower_threshold, weight_upper_threshold)
 
-    next_population = get_next_population(initial_population, phenotype_strategy, evaluation_strategy,
+    next_population, phenotype_values, start_time, end_time = get_next_population(initial_population, phenotype_strategy, evaluation_strategy,
                                           parent_selection_strategy, mutation_strategy, offspring_selection_strategy)
 
     assert len(next_population) == number_of_genotypes
