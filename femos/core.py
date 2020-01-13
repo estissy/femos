@@ -23,12 +23,16 @@ def get_random_numbers(quantity, lower_threshold, upper_threshold):
     return numbers
 
 
-def get_number_of_nn_weights(input_nodes, hidden_layers_nodes, output_nodes):
+def get_number_of_nn_weights(input_nodes, hidden_layers_nodes, output_nodes, bias_weights=False):
     grouped_nodes = [input_nodes] + hidden_layers_nodes + [output_nodes]
 
     total = 0
     for index in range(len(grouped_nodes) - 1):
         total += grouped_nodes[index] * grouped_nodes[index + 1]
+
+    if bias_weights:
+        number_of_bias_weights = input_nodes + sum(hidden_layers_nodes) + output_nodes
+        total += number_of_bias_weights
 
     return total
 
