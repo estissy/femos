@@ -40,14 +40,18 @@ summary_lookup = {
 
 
 def get_evolution_summary(arguments, memory_consumption_probe=100):
-    output = [str.format('# Basic summary'), str.format('Genotype: {}', genotype_lookup[arguments.genotype]),
+    output = [str.format('# Basic summary'),
+              str.format('Genotype: {}', genotype_lookup[arguments.genotype]),
               str.format('Input nodes: {}', arguments.input_nodes),
               str.format('Output nodes: {}', arguments.output_nodes),
               str.format('Hidden layer nodes: {}', arguments.hidden_layer_nodes),
               str.format('Weight lower threshold: {}', arguments.weight_lower_threshold),
               str.format('Weight upper threshold: {}', arguments.weight_upper_threshold),
               str.format('Population size: {}', arguments.population_size),
-              str.format('Tournament size: {}', arguments.tournament_size), str.format('# Genotype specific summary')]
+              str.format('Tournament size: {}', arguments.tournament_size),
+              str.format('Epochs: {}', arguments.epochs),
+              str.format('Bias {}', arguments.bias),
+              str.format('# Genotype specific summary')]
 
     if arguments.genotype == simple_genotype_choice:
         output.append(str.format('Mutation mean: {}', arguments.mutation_mean))
@@ -121,6 +125,7 @@ def get_core_argument_parser():
                         help='Describes genotype type: simple_genotype - SimpleGenotype, uoss_genotype - UncorrelatedOneStepSizeGenotype, '
                              'unss_genotype - UncorrelatedNStepSizeGenotype')
 
+    parser.add_argument('--bias', help='Use bias', action='store_true', default=False)
     parser.add_argument('--hidden_layer_nodes', help='List of nodes in hidden layer', type=int, default=[],
                         nargs='+')
     parser.add_argument("--weight_lower_threshold", help="Lower threshold value of ann weights", type=float,
@@ -167,7 +172,7 @@ def handle_evolution_run(evaluation_strategy):
 
         def phenotype_strategy(genotype):
             return Phenotype.get_phenotype_from_genotype(genotype, arguments.input_nodes, arguments.hidden_layer_nodes,
-                                                         arguments.output_nodes)
+                                                         arguments.output_nodes, arguments.bias)
 
         def parent_selection_strategy(phenotype_values):
             if arguments.tournament_size == 2:
@@ -191,7 +196,7 @@ def handle_evolution_run(evaluation_strategy):
             return get_age_based_offspring_selection(parents, mutated_parents)
 
         number_of_nn_weights = get_number_of_nn_weights(arguments.input_nodes, arguments.hidden_layer_nodes,
-                                                        arguments.output_nodes)
+                                                        arguments.output_nodes, arguments.bias)
         if arguments.genotype == simple_genotype_choice:
             initial_population = SimpleGenotype.get_random_genotypes(arguments.population_size, number_of_nn_weights,
                                                                      arguments.weight_lower_threshold,
