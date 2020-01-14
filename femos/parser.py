@@ -79,6 +79,7 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
         demo_genotypes = map(
             lambda index: SimpleGenotype.get_random_genotype(number_of_nn_weights, arguments.weight_lower_threshold,
                                                              arguments.weight_upper_threshold), demo_genotype_iterator)
+        demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights), demo_genotypes))
 
     if arguments.genotype == uncorrelated_one_step_size_genotype_choice:
         demo_genotypes = map(lambda index: UncorrelatedOneStepSizeGenotype.get_random_genotype(number_of_nn_weights,
@@ -87,6 +88,7 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
                                                                                                arguments.mutation_step_size_lower_threshold,
                                                                                                arguments.mutation_step_size_upper_threshold),
                              demo_genotype_iterator)
+        demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights) + getsizeof([demo_genotype.mutation_step_size]), demo_genotypes))
 
     if arguments.genotype == uncorrelated_n_step_size_genotype_choice:
         demo_genotypes = map(lambda index: UncorrelatedNStepSizeGenotype.get_random_genotype(number_of_nn_weights,
@@ -95,8 +97,8 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
                                                                                              arguments.mutation_step_size_lower_threshold,
                                                                                              arguments.mutation_step_size_upper_threshold),
                              demo_genotype_iterator)
+        demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights) + getsizeof(demo_genotype.mutation_step_sizes), demo_genotypes))
 
-    demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights), demo_genotypes))
     mean_demo_genotype_size = mean(demo_genotype_sizes) * arguments.population_size
     output.append(str.format('Calculated memory consumption (Python list): {}', naturalsize(mean_demo_genotype_size)))
     output.append(str.format('Approximate end time: {}', get_end_datetime(arguments.duration).isoformat(sep=' ')))
