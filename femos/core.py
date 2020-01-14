@@ -121,21 +121,21 @@ def handle_epoch_summary(summary_strategy, epoch, phenotype_values, start_time, 
             epoch_summary = get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time)
 
             if Summary.EPOCH in summary:
-                output.append(str.format('Epoch: {}', epoch_summary[Summary.EPOCH]))
+                output.append(str(epoch_summary[Summary.EPOCH]))
 
             if Summary.MEAN in summary:
-                output.append(str.format('Mean: {}', epoch_summary[Summary.MEAN]))
+                output.append(str(epoch_summary[Summary.MEAN]))
 
             if Summary.STDDEV in summary:
-                output.append(str.format('Stddev: {}', epoch_summary[Summary.STDDEV]))
+                output.append(str(epoch_summary[Summary.STDDEV]))
 
             if Summary.POPULATION_SIZE in summary:
-                output.append(str.format('Population size: {}', epoch_summary[Summary.POPULATION_SIZE]))
+                output.append(str(epoch_summary[Summary.POPULATION_SIZE]))
 
             if Summary.DURATION in summary:
-                output.append(str.format("Duration: {}", epoch_summary[Summary.DURATION]))
+                output.append(str(epoch_summary[Summary.DURATION]))
 
-            print(' | '.join(output))
+            print(','.join(output))
 
 
 def get_end_datetime(duration):
