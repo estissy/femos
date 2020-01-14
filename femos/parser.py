@@ -39,11 +39,11 @@ summary_lookup = {
 }
 
 
-def get_evolution_summary(arguments, memory_consumption_probe=100):
+def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumption_probe=100):
     output = [str.format('# Basic summary'),
+              str.format('Input nodes: {}', input_nodes),
+              str.format('Iutput nodes: {}', output_nodes),
               str.format('Genotype: {}', genotype_lookup[arguments.genotype]),
-              str.format('Input nodes: {}', arguments.input_nodes),
-              str.format('Output nodes: {}', arguments.output_nodes),
               str.format('Hidden layer nodes: {}', arguments.hidden_layer_nodes),
               str.format('Weight lower threshold: {}', arguments.weight_lower_threshold),
               str.format('Weight upper threshold: {}', arguments.weight_upper_threshold),
@@ -68,8 +68,8 @@ def get_evolution_summary(arguments, memory_consumption_probe=100):
             output.append(str.format('Tau 2: {}', arguments.tau2))
 
     output.append(str.format('# Calculated summary'))
-    number_of_nn_weights = get_number_of_nn_weights(arguments.input_nodes, arguments.hidden_layer_nodes,
-                                                    arguments.output_nodes)
+    number_of_nn_weights = get_number_of_nn_weights(input_nodes, arguments.hidden_layer_nodes,
+                                                    output_nodes)
     output.append(str.format('Number of neural network weights: {}', number_of_nn_weights))
 
     # Calculating memory consumption
@@ -117,8 +117,6 @@ def get_evolution_summary(arguments, memory_consumption_probe=100):
 
 def get_core_argument_parser():
     parser = ArgumentParser(description='Femos CLI - Command line interface for my small library for neuroevolution.')
-    parser.add_argument('input_nodes', metavar='I', type=int, help='Number of nodes in input layer.')
-    parser.add_argument('output_nodes', metavar='O', type=int, help='Number of nodes in output layer.')
     parser.add_argument('genotype', metavar='G', type=str,
                         choices=[simple_genotype_choice, uncorrelated_one_step_size_genotype_choice,
                                  uncorrelated_n_step_size_genotype_choice],
@@ -162,17 +160,17 @@ def get_core_argument_parser():
     return parser
 
 
-def handle_evolution_run(evaluation_strategy):
+def handle_evolution_run(input_nodes, output_nodes, evaluation_strategy):
     argument_parser = get_core_argument_parser()
     arguments = argument_parser.parse_args()
-    evolution_summary = get_evolution_summary(arguments)
+    evolution_summary = get_evolution_summary(arguments, input_nodes, output_nodes)
 
     print(evolution_summary)
     if not arguments.dry_run:
 
         def phenotype_strategy(genotype):
-            return Phenotype.get_phenotype_from_genotype(genotype, arguments.input_nodes, arguments.hidden_layer_nodes,
-                                                         arguments.output_nodes, arguments.bias)
+            return Phenotype.get_phenotype_from_genotype(genotype, input_nodes, arguments.hidden_layer_nodes,
+                                                         output_nodes, arguments.bias)
 
         def parent_selection_strategy(phenotype_values):
             if arguments.tournament_size == 2:
@@ -195,8 +193,8 @@ def handle_evolution_run(evaluation_strategy):
         def offspring_selection_strategy(parents, mutated_parents):
             return get_age_based_offspring_selection(parents, mutated_parents)
 
-        number_of_nn_weights = get_number_of_nn_weights(arguments.input_nodes, arguments.hidden_layer_nodes,
-                                                        arguments.output_nodes, arguments.bias)
+        number_of_nn_weights = get_number_of_nn_weights(input_nodes, arguments.hidden_layer_nodes,
+                                                        output_nodes, arguments.bias)
         if arguments.genotype == simple_genotype_choice:
             initial_population = SimpleGenotype.get_random_genotypes(arguments.population_size, number_of_nn_weights,
                                                                      arguments.weight_lower_threshold,
