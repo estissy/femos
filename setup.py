@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="femos",
-    version="0.0.10",
+    version="0.0.11",
     author="estissy",
     author_email="estissy@gmail.com",
     description="My small library for neuroevolution",
