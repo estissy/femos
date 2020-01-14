@@ -3,9 +3,9 @@ from numpy import array, matmul, tanh
 
 class Phenotype:
 
-    def __init__(self, weights, input_nodes, hidden_layers_nodes, output_nodes, bias_weights):
+    def __init__(self, weights, input_nodes, hidden_layers_nodes, output_nodes, use_bias):
         self.layers = []
-        self.bias = []
+        self.bias_layers = []
 
         grouped_nodes = [input_nodes] + hidden_layers_nodes + [output_nodes]
         weights_offset = 0
@@ -19,7 +19,7 @@ class Phenotype:
             layer_matrix = layer_matrix.reshape(grouped_nodes[index], grouped_nodes[index + 1])
             self.layers.append(layer_matrix)
 
-        if bias_weights:
+        if use_bias:
             number_of_bias_weights = sum(hidden_layers_nodes) + output_nodes
             bias_weights = weights[weights_offset:weights_offset + number_of_bias_weights]
 
@@ -28,12 +28,12 @@ class Phenotype:
                 selected_bias_weights = bias_weights[bias_weights_offset:bias_weights_offset + units]
                 bias_weights_offset += units
                 bias_matrix = array(selected_bias_weights).reshape(1, units)
-                self.bias.append(bias_matrix)
+                self.bias_layers.append(bias_matrix)
 
         self.input_nodes = input_nodes
         self.hidden_layers_nodes = hidden_layers_nodes
         self.output_nodes = output_nodes
-        self.bias_weights = bias_weights
+        self.use_bias = use_bias
 
     @staticmethod
     def get_phenotype_from_genotype(genotype, input_nodes, hidden_layer_nodes, output_nodes, bias_weights=False):
@@ -45,9 +45,9 @@ class Phenotype:
         number_of_layers = len(phenotype.hidden_layers_nodes) + 1
 
         result = input_values
-        if phenotype.bias_weights:
+        if phenotype.use_bias:
             for index in range(number_of_layers):
-                result = activation_function(matmul(result, phenotype.layers[index]) + phenotype.bias[index])
+                result = activation_function(matmul(result, phenotype.layers[index]) + phenotype.bias_layers[index])
 
             return result
         else:
