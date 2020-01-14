@@ -4,7 +4,7 @@ from sys import getsizeof
 
 from humanize import naturalsize
 
-from femos.core import get_number_of_nn_weights, get_evolved_population, Summary
+from femos.core import get_number_of_nn_weights, get_evolved_population, Summary, get_end_datetime
 from femos.genotypes import SimpleGenotype, UncorrelatedOneStepSizeGenotype, UncorrelatedNStepSizeGenotype
 from femos.phenotypes import Phenotype
 from femos.selections import get_two_size_tournament_parent_selection, get_n_size_tournament_parent_selection, \
@@ -49,8 +49,8 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
               str.format('Weight upper threshold: {}', arguments.weight_upper_threshold),
               str.format('Population size: {}', arguments.population_size),
               str.format('Tournament size: {}', arguments.tournament_size),
-              str.format('Epochs: {}', arguments.epochs),
-              str.format('Bias {}', arguments.bias),
+              str.format('Duration (hours): {}', arguments.duration),
+              str.format('Use bias: {}', arguments.bias),
               str.format('# Genotype specific summary')]
 
     if arguments.genotype == simple_genotype_choice:
@@ -99,6 +99,7 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
     demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights), demo_genotypes))
     mean_demo_genotype_size = mean(demo_genotype_sizes) * arguments.population_size
     output.append(str.format('Calculated memory consumption (Python list): {}', naturalsize(mean_demo_genotype_size)))
+    output.append(str.format('Approximate end time: {}', get_end_datetime(arguments.duration).isoformat(sep=' ')))
 
     output.append(str.format('# Utils summary'))
     output.append(str.format('Epoch summary: {}', arguments.epoch_summary))
@@ -139,7 +140,7 @@ def get_core_argument_parser():
     parser.add_argument("--population_size", help="Number of individuals in population", type=int, default=20)
     parser.add_argument("--tournament_size", help="Number of individuals to rival in tournament selection",
                         type=int, default=3)
-    parser.add_argument("--epochs", help="Number of epochs", type=int, default=1000)
+    parser.add_argument('--duration', help="Duration of evolution in hours", type=float, default=1)
     parser.add_argument("--tau1", help="Mutation operator parameter - tau1", type=float, default=0.001)
     parser.add_argument("--tau2", help="Mutation operator parameter - tau2", type=float, default=0.01)
 
@@ -229,4 +230,4 @@ def handle_evolution_run(input_nodes, output_nodes, evaluation_strategy):
 
         return get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
                                       parent_selection_strategy, mutation_strategy, offspring_selection_strategy,
-                                      arguments.epochs, population_backup, epoch_summary_strategy)
+                                      arguments.duration, population_backup, epoch_summary_strategy)

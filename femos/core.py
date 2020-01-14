@@ -5,6 +5,7 @@ from pickle import dump, HIGHEST_PROTOCOL, load
 from random import uniform
 from statistics import mean, stdev
 from time import time
+from datetime import datetime, timedelta
 
 
 class Summary(Enum):
@@ -53,17 +54,12 @@ def get_next_population(population, phenotype_strategy, evaluation_strategy, par
     return offspring, phenotypes_values, start_time, end_time
 
 
-def get_population_file_name(number_of_epoch, number_of_prefix_zeros=3, extension=".population"):
-    number_of_epoch_digits = len(str(number_of_epoch))
-    prefix_zeros = number_of_prefix_zeros - number_of_epoch_digits
-
-    file_name_elements = [0] * prefix_zeros + [number_of_epoch]
-    str_file_name_elements = map(str, file_name_elements)
-
-    return ''.join(str_file_name_elements) + extension
+def get_population_file_name(extension=".population"):
+    current_timestamp = str(int(time()))
+    return current_timestamp + extension
 
 
-def handle_backup(backup_strategy, current_epoch, epochs, population):
+def handle_backup(backup_strategy, current_epoch, population):
     if backup_strategy is not None:
         interval = backup_strategy[0]
 
@@ -73,8 +69,7 @@ def handle_backup(backup_strategy, current_epoch, epochs, population):
 
             makedirs(backup_directory, exist_ok=True)
 
-            number_of_file_name_prefix_zeros = len(str(epochs)) + 1
-            file_name = get_population_file_name(current_epoch, number_of_file_name_prefix_zeros, file_extension)
+            file_name = get_population_file_name(file_extension)
             backup_path = path.join(backup_directory, file_name)
 
             with open(backup_path, "wb+") as dump_file:
@@ -143,19 +138,28 @@ def handle_epoch_summary(summary_strategy, epoch, phenotype_values, start_time, 
             print(' | '.join(output))
 
 
+def get_end_datetime(duration):
+    start_datetime = datetime.now()
+    duration_timedelta = timedelta(hours=duration)
+    return start_datetime + duration_timedelta
+
+
 def get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
-                           mutation_strategy, offspring_selection_strategy, number_of_epochs, backup_strategy=None,
+                           mutation_strategy, offspring_selection_strategy, duration, backup_strategy=None,
                            epoch_summary_strategy=None):
     tmp_population = initial_population
+    end_datetime = get_end_datetime(duration)
+    epoch = 0
 
-    for number_of_epoch in range(number_of_epochs):
+    while datetime.now() <= end_datetime:
         tmp_population, phenotype_values, start_time, end_time = get_next_population(tmp_population, phenotype_strategy,
                                                                                      evaluation_strategy,
                                                                                      parent_selection_strategy,
                                                                                      mutation_strategy,
                                                                                      offspring_selection_strategy)
 
-        handle_backup(backup_strategy, number_of_epoch + 1, number_of_epochs, tmp_population)
-        handle_epoch_summary(epoch_summary_strategy, number_of_epoch + 1, phenotype_values, start_time, end_time)
+        epoch += 1
+        handle_backup(backup_strategy, epoch, tmp_population)
+        handle_epoch_summary(epoch_summary_strategy, epoch, phenotype_values, start_time, end_time)
 
     return tmp_population
