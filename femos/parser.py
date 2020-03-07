@@ -1,6 +1,7 @@
 from argparse import ArgumentParser
 from statistics import mean
 from sys import getsizeof
+from os import listdir
 
 from humanize import naturalsize
 
@@ -42,7 +43,7 @@ summary_lookup = {
 def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumption_probe=100):
     output = [str.format('# Basic summary'),
               str.format('Input nodes: {}', input_nodes),
-              str.format('Iutput nodes: {}', output_nodes),
+              str.format('Intput nodes: {}', output_nodes),
               str.format('Genotype: {}', genotype_lookup[arguments.genotype]),
               str.format('Hidden layer nodes: {}', arguments.hidden_layer_nodes),
               str.format('Weight lower threshold: {}', arguments.weight_lower_threshold),
