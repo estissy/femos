@@ -1,11 +1,10 @@
 from argparse import ArgumentParser
 from statistics import mean
 from sys import getsizeof
-from os import listdir
 
 from humanize import naturalsize
 
-from femos.core import get_number_of_nn_weights, get_evolved_population, Summary, get_end_datetime
+from femos.core import get_number_of_nn_weights, get_evolved_population, Summary, get_end_datetime, handle_backup_load
 from femos.genotypes import SimpleGenotype, UncorrelatedOneStepSizeGenotype, UncorrelatedNStepSizeGenotype
 from femos.phenotypes import Phenotype
 from femos.selections import get_two_size_tournament_parent_selection, get_n_size_tournament_parent_selection, \
@@ -89,7 +88,9 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
                                                                                                arguments.mutation_step_size_lower_threshold,
                                                                                                arguments.mutation_step_size_upper_threshold),
                              demo_genotype_iterator)
-        demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights) + getsizeof([demo_genotype.mutation_step_size]), demo_genotypes))
+        demo_genotype_sizes = list(
+            map(lambda demo_genotype: getsizeof(demo_genotype.weights) + getsizeof([demo_genotype.mutation_step_size]),
+                demo_genotypes))
 
     if arguments.genotype == uncorrelated_n_step_size_genotype_choice:
         demo_genotypes = map(lambda index: UncorrelatedNStepSizeGenotype.get_random_genotype(number_of_nn_weights,
@@ -98,7 +99,9 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
                                                                                              arguments.mutation_step_size_lower_threshold,
                                                                                              arguments.mutation_step_size_upper_threshold),
                              demo_genotype_iterator)
-        demo_genotype_sizes = list(map(lambda demo_genotype: getsizeof(demo_genotype.weights) + getsizeof(demo_genotype.mutation_step_sizes), demo_genotypes))
+        demo_genotype_sizes = list(
+            map(lambda demo_genotype: getsizeof(demo_genotype.weights) + getsizeof(demo_genotype.mutation_step_sizes),
+                demo_genotypes))
 
     mean_demo_genotype_size = mean(demo_genotype_sizes) * arguments.population_size
     output.append(str.format('Calculated memory consumption (Python list): {}', naturalsize(mean_demo_genotype_size)))
@@ -115,6 +118,10 @@ def get_evolution_summary(arguments, input_nodes, output_nodes, memory_consumpti
         output.append(str.format('Population backup directory: {}', arguments.population_backup_directory))
         output.append(str.format('Population backup interval: {}', arguments.population_backup_interval))
         output.append(str.format('Population backup file extension: .{}', arguments.population_backup_file_extension))
+
+    if arguments.initial_population_directory:
+        output.append(str.format('Initial population directory: {}', arguments.initial_population_directory))
+        output.append(str.format('Initial population file extension: {}', arguments.initial_population_file_extension))
 
     return '\n'.join(output)
 
@@ -160,6 +167,8 @@ def get_core_argument_parser():
     parser.add_argument('--population_backup_directory', type=str, default='backups')
     parser.add_argument('--population_backup_interval', type=int, default=5)
     parser.add_argument('--population_backup_file_extension', type=str, default='.population')
+    parser.add_argument('--initial_population_directory', type=str)
+    parser.add_argument('--initial_population_file_extension', type=str, default='.population')
     parser.add_argument('--dry_run', action='store_true', default=False)
     return parser
 
@@ -230,6 +239,10 @@ def handle_evolution_run(input_nodes, output_nodes, evaluation_strategy):
             summary_features = list(
                 map(lambda summary_choice: summary_lookup[summary_choice], arguments.epoch_summary_features))
             epoch_summary_strategy = [summary_features, arguments.epoch_summary_interval]
+
+        if arguments.initial_population_directory:
+            initial_population = handle_backup_load(arguments.initial_population_directory,
+                                                    arguments.initial_population_file_extension)
 
         return get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
                                       parent_selection_strategy, mutation_strategy, offspring_selection_strategy,
