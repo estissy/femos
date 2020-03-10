@@ -73,14 +73,11 @@ def test_get_next_population():
 
 
 def test_get_population_file_name():
-    epoch = 100
+   generated_population_name = get_population_file_name('.popu')
+   assert generated_population_name.split('.')[-1] == "popu"
 
-    generated_population_name = get_population_file_name(epoch, 4, ".popu")
-    assert generated_population_name == "0100.popu"
-
-    epoch = 20
-    generated_population_name = get_population_file_name(epoch, 2, ".population")
-    assert generated_population_name == "20.population"
+   generated_population_name = get_population_file_name('.population')
+   assert generated_population_name.split('.')[-1] == "population"
 
 
 def test_population_backup():
@@ -122,10 +119,10 @@ def test_population_backup():
     backup = [5, "backups/evo1", ".population"]
     evolved_population = get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
                                                 parent_selection_strategy, mutation_strategy,
-                                                offspring_selection_strategy, 100, backup)
+                                                offspring_selection_strategy, 0.02, backup)
 
     backup_files = glob("backups/evo1/*.population")
-    assert len(backup_files) == 20
+    assert len(backup_files) > 0
 
     # Clear after save
     rmtree("backups", ignore_errors=True)
@@ -170,7 +167,7 @@ def test_load_population_backup():
     backup = [5, "backups/evo1", ".population"]
     evolved_population = get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
                                                 parent_selection_strategy, mutation_strategy,
-                                                offspring_selection_strategy, 100, backup)
+                                                offspring_selection_strategy, 0.01, backup)
 
     population = handle_backup_load("backups/evo1", '.population')
     assert len(population) == 40
