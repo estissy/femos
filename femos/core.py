@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from enum import Enum
 from glob import glob
 from os import path, makedirs
@@ -5,7 +6,6 @@ from pickle import dump, HIGHEST_PROTOCOL, load
 from random import uniform
 from statistics import mean, stdev
 from time import time
-from datetime import datetime, timedelta
 
 
 class Summary(Enum):
@@ -79,6 +79,10 @@ def handle_backup(backup_strategy, current_epoch, population):
 def handle_backup_load(backup_path, extension):
     glob_search_string = path.join(backup_path, "*{}".format(extension))
     backup_files = glob(glob_search_string)
+
+    if len(backup_files) == 0:
+        raise FileNotFoundError('There are no backups files to load in selected directory and file extension.')
+
     sorted_backup_files = sorted(backup_files)
     last_backup_file = sorted_backup_files[-1]
 
