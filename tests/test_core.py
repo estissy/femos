@@ -119,7 +119,7 @@ def test_population_backup():
     backup = [5, "backups/evo1", ".population"]
     evolved_population = get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
                                                 parent_selection_strategy, mutation_strategy,
-                                                offspring_selection_strategy, 0.02, backup)
+                                                offspring_selection_strategy, 0.01, backup)
 
     backup_files = glob("backups/evo1/*.population")
     assert len(backup_files) > 0
@@ -164,12 +164,12 @@ def test_load_population_backup():
     initial_population = SimpleGenotype.get_random_genotypes(number_of_genotypes, number_of_nn_weights,
                                                              weight_lower_threshold, weight_upper_threshold)
 
-    backup = [5, "backups/evo1", ".population"]
+    backup = [1, 'backups/evo1', '.population']
     evolved_population = get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
                                                 parent_selection_strategy, mutation_strategy,
                                                 offspring_selection_strategy, 0.01, backup)
 
-    population = handle_backup_load("backups/evo1", '.population')
+    population = handle_backup_load('backups/evo1', '.population')
     assert len(population) == 40
     assert population == evolved_population
 
