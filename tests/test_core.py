@@ -42,7 +42,16 @@ def test_get_next_population():
         return Phenotype.get_phenotype_from_genotype(genotype, input_nodes, hidden_layers_nodes, output_nodes)
 
     # Fake evaluation function, assign random number form 0 to 1 to each phenotype
-    def evaluation_strategy(phenotypes):
+    def train_evaluation_strategy(phenotypes):
+        number_of_phenotypes = len(phenotypes)
+
+        evaluation = [0] * number_of_phenotypes
+        for index in range(number_of_phenotypes):
+            evaluation[index] = random()
+
+        return evaluation
+
+    def test_evaluation_strategy(phenotypes):
         number_of_phenotypes = len(phenotypes)
 
         evaluation = [0] * number_of_phenotypes
@@ -63,8 +72,9 @@ def test_get_next_population():
     initial_population = SimpleGenotype.get_random_genotypes(number_of_genotypes, number_of_nn_weights,
                                                              weight_lower_threshold, weight_upper_threshold)
 
-    next_population, phenotype_values, start_time, end_time = get_next_population(initial_population, phenotype_strategy, evaluation_strategy,
-                                          parent_selection_strategy, mutation_strategy, offspring_selection_strategy)
+    next_population, train_phenotype_values, test_phenotype_values, start_time, end_time = get_next_population(
+        initial_population, phenotype_strategy, train_evaluation_strategy, test_evaluation_strategy,
+        parent_selection_strategy, mutation_strategy, offspring_selection_strategy)
 
     assert len(next_population) == number_of_genotypes
 
@@ -73,11 +83,11 @@ def test_get_next_population():
 
 
 def test_get_population_file_name():
-   generated_population_name = get_population_file_name('.popu')
-   assert generated_population_name.split('.')[-1] == "popu"
+    generated_population_name = get_population_file_name('.popu')
+    assert generated_population_name.split('.')[-1] == "popu"
 
-   generated_population_name = get_population_file_name('.population')
-   assert generated_population_name.split('.')[-1] == "population"
+    generated_population_name = get_population_file_name('.population')
+    assert generated_population_name.split('.')[-1] == "population"
 
 
 def test_population_backup():
@@ -95,7 +105,17 @@ def test_population_backup():
         return Phenotype.get_phenotype_from_genotype(genotype, input_nodes, hidden_layers_nodes, output_nodes)
 
     # Fake evaluation function, assign random number form 0 to 1 to each phenotype
-    def evaluation_strategy(phenotypes):
+    def train_evaluation_strategy(phenotypes):
+        number_of_phenotypes = len(phenotypes)
+
+        evaluation = [0] * number_of_phenotypes
+        for index in range(number_of_phenotypes):
+            evaluation[index] = random()
+
+        return evaluation
+
+    # Fake evaluation function, assign random number form 0 to 1 to each phenotype
+    def test_evaluation_strategy(phenotypes):
         number_of_phenotypes = len(phenotypes)
 
         evaluation = [0] * number_of_phenotypes
@@ -117,8 +137,8 @@ def test_population_backup():
                                                              weight_lower_threshold, weight_upper_threshold)
 
     backup = [5, "backups/evo1", ".population"]
-    evolved_population = get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
-                                                parent_selection_strategy, mutation_strategy,
+    evolved_population = get_evolved_population(initial_population, phenotype_strategy, train_evaluation_strategy,
+                                                test_evaluation_strategy, parent_selection_strategy, mutation_strategy,
                                                 offspring_selection_strategy, 0.01, backup)
 
     backup_files = glob("backups/evo1/*.population")
@@ -143,7 +163,17 @@ def test_load_population_backup():
         return Phenotype.get_phenotype_from_genotype(genotype, input_nodes, hidden_layers_nodes, output_nodes)
 
     # Fake evaluation function, assign random number form 0 to 1 to each phenotype
-    def evaluation_strategy(phenotypes):
+    def train_evaluation_strategy(phenotypes):
+        number_of_phenotypes = len(phenotypes)
+
+        evaluation = [0] * number_of_phenotypes
+        for index in range(number_of_phenotypes):
+            evaluation[index] = random()
+
+        return evaluation
+
+    # Fake evaluation function, assign random number form 0 to 1 to each phenotype
+    def test_evaluation_strategy(phenotypes):
         number_of_phenotypes = len(phenotypes)
 
         evaluation = [0] * number_of_phenotypes
@@ -165,8 +195,8 @@ def test_load_population_backup():
                                                              weight_lower_threshold, weight_upper_threshold)
 
     backup = [1, 'backups/evo1', '.population']
-    evolved_population = get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
-                                                parent_selection_strategy, mutation_strategy,
+    evolved_population = get_evolved_population(initial_population, phenotype_strategy, train_evaluation_strategy,
+                                                test_evaluation_strategy, parent_selection_strategy, mutation_strategy,
                                                 offspring_selection_strategy, 0.01, backup)
 
     population = handle_backup_load('backups/evo1', '.population')
