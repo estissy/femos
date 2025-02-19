@@ -24,15 +24,20 @@ genotype_lookup = {
 # Available summary choices
 summary_epoch_choice = 'epoch'
 summary_mean_choice = 'mean'
+summary_max_choice = 'max'
+summary_min_choice = 'min'
 summary_stddev_choice = 'stddev'
 summary_population_size_choice = 'population_size'
 summary_duration_choice = 'duration'
-summary_choices = [summary_epoch_choice, summary_mean_choice, summary_stddev_choice, summary_population_size_choice,
+summary_choices = [summary_epoch_choice, summary_mean_choice, summary_max_choice, summary_min_choice,
+                   summary_stddev_choice, summary_population_size_choice,
                    summary_duration_choice]
 
 summary_lookup = {
     summary_epoch_choice: Summary.EPOCH,
     summary_mean_choice: Summary.MEAN,
+    summary_max_choice: Summary.MAX,
+    summary_min_choice: Summary.MIN,
     summary_stddev_choice: Summary.STDDEV,
     summary_population_size_choice: Summary.POPULATION_SIZE,
     summary_duration_choice: Summary.DURATION
@@ -173,7 +178,7 @@ def get_core_argument_parser():
     return parser
 
 
-def handle_evolution_run(input_nodes, output_nodes, evaluation_strategy):
+def handle_evolution_run(input_nodes, output_nodes, train_evaluation_strategy, test_evaluation_strategy):
     argument_parser = get_core_argument_parser()
     arguments = argument_parser.parse_args()
     evolution_summary = get_evolution_summary(arguments, input_nodes, output_nodes)
@@ -244,6 +249,7 @@ def handle_evolution_run(input_nodes, output_nodes, evaluation_strategy):
             initial_population = handle_backup_load(arguments.initial_population_directory,
                                                     arguments.initial_population_file_extension)
 
-        return get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy,
-                                      parent_selection_strategy, mutation_strategy, offspring_selection_strategy,
-                                      arguments.duration, population_backup, epoch_summary_strategy)
+        return get_evolved_population(initial_population, phenotype_strategy, train_evaluation_strategy,
+                                      test_evaluation_strategy, parent_selection_strategy, mutation_strategy,
+                                      offspring_selection_strategy, arguments.duration, population_backup,
+                                      epoch_summary_strategy)

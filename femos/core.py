@@ -14,6 +14,8 @@ class Summary(Enum):
     STDDEV = 3,
     POPULATION_SIZE = 4,
     DURATION = 5,
+    MAX = 6
+    MIN = 7
 
 
 def get_random_numbers(quantity, lower_threshold, upper_threshold):
@@ -38,20 +40,21 @@ def get_number_of_nn_weights(input_nodes, hidden_layers_nodes, output_nodes, use
     return total
 
 
-def get_next_population(population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
-                        mutation_strategy, offspring_selection_strategy):
+def get_next_population(population, phenotype_strategy, train_evaluation_strategy, test_evaluation_strategy,
+                        parent_selection_strategy, mutation_strategy, offspring_selection_strategy):
     start_time = time()
-    phenotypes = map(phenotype_strategy, population)
-    phenotypes_values = evaluation_strategy(list(phenotypes))
+    phenotypes = list(map(phenotype_strategy, population))
+    train_phenotype_values = train_evaluation_strategy(phenotypes)
+    test_phenotype_values = test_evaluation_strategy(phenotypes)
 
-    parent_indices = parent_selection_strategy(phenotypes_values)
+    parent_indices = parent_selection_strategy(train_phenotype_values)
     parents = map(lambda parent_index: population[parent_index], parent_indices)
 
     mutated_parents = map(mutation_strategy, parents)
     offspring = offspring_selection_strategy(population, list(mutated_parents))
     end_time = time()
 
-    return offspring, phenotypes_values, start_time, end_time
+    return offspring, train_phenotype_values, test_phenotype_values, start_time, end_time
 
 
 def get_population_file_name(extension=".population"):
@@ -101,6 +104,12 @@ def get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time):
     if Summary.MEAN in summary:
         results.update({Summary.MEAN: mean(phenotype_values)})
 
+    if Summary.MAX in summary:
+        results.update({Summary.MAX: max(phenotype_values)})
+
+    if Summary.MIN in summary:
+        results.update({Summary.MIN: min(phenotype_values)})
+
     if Summary.STDDEV in summary:
         results.update({Summary.STDDEV: stdev(phenotype_values)})
 
@@ -115,31 +124,52 @@ def get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time):
     return results
 
 
-def handle_epoch_summary(summary_strategy, epoch, phenotype_values, start_time, end_time):
+def handle_epoch_summary(summary_strategy, epoch, train_phenotype_values, test_phenotype_values, start_time, end_time):
     if summary_strategy is not None:
         interval = summary_strategy[1]
 
         if epoch % interval == 0:
             summary = summary_strategy[0]
-            output = []
-            epoch_summary = get_epoch_summary(summary, epoch, phenotype_values, start_time, end_time)
+            train_output = []
+            train_epoch_summary = get_epoch_summary(summary, epoch, train_phenotype_values, start_time, end_time)
 
             if Summary.EPOCH in summary:
-                output.append(str(epoch_summary[Summary.EPOCH]))
+                train_output.append(str(train_epoch_summary[Summary.EPOCH]))
 
             if Summary.MEAN in summary:
-                output.append(str(epoch_summary[Summary.MEAN]))
+                train_output.append(str(train_epoch_summary[Summary.MEAN]))
+
+            if Summary.MAX in summary:
+                train_output.append(str(train_epoch_summary[Summary.MAX]))
+
+            if Summary.MIN in summary:
+                train_output.append(str(train_epoch_summary[Summary.MIN]))
 
             if Summary.STDDEV in summary:
-                output.append(str(epoch_summary[Summary.STDDEV]))
+                train_output.append(str(train_epoch_summary[Summary.STDDEV]))
 
             if Summary.POPULATION_SIZE in summary:
-                output.append(str(epoch_summary[Summary.POPULATION_SIZE]))
+                train_output.append(str(train_epoch_summary[Summary.POPULATION_SIZE]))
 
             if Summary.DURATION in summary:
-                output.append(str(epoch_summary[Summary.DURATION]))
+                train_output.append(str(train_epoch_summary[Summary.DURATION]))
 
-            print(','.join(output))
+            test_epoch_summary = get_epoch_summary(summary, epoch, test_phenotype_values, start_time, end_time)
+
+            test_output = []
+            if Summary.MEAN in summary:
+                test_output.append(str(test_epoch_summary[Summary.MEAN]))
+
+            if Summary.MAX in summary:
+                test_output.append(str(test_epoch_summary[Summary.MAX]))
+
+            if Summary.MIN in summary:
+                test_output.append(str(test_epoch_summary[Summary.MIN]))
+
+            if Summary.STDDEV in summary:
+                test_output.append(str(test_epoch_summary[Summary.STDDEV]))
+
+            print('Train: ' + ', '.join(train_output) + ' | Test: ' + ', '.join(test_output))
 
 
 def get_end_datetime(duration):
@@ -148,22 +178,25 @@ def get_end_datetime(duration):
     return start_datetime + duration_timedelta
 
 
-def get_evolved_population(initial_population, phenotype_strategy, evaluation_strategy, parent_selection_strategy,
-                           mutation_strategy, offspring_selection_strategy, duration, backup_strategy=None,
-                           epoch_summary_strategy=None):
+def get_evolved_population(initial_population, phenotype_strategy, train_evaluation_strategy, test_evaluation_strategy,
+                           parent_selection_strategy, mutation_strategy, offspring_selection_strategy, duration,
+                           backup_strategy=None, epoch_summary_strategy=None):
     tmp_population = initial_population
     end_datetime = get_end_datetime(duration)
     epoch = 0
 
     while datetime.now() <= end_datetime:
-        tmp_population, phenotype_values, start_time, end_time = get_next_population(tmp_population, phenotype_strategy,
-                                                                                     evaluation_strategy,
-                                                                                     parent_selection_strategy,
-                                                                                     mutation_strategy,
-                                                                                     offspring_selection_strategy)
+        tmp_population, train_phenotype_values, test_phenotype_values, start_time, end_time = get_next_population(
+            tmp_population, phenotype_strategy,
+            train_evaluation_strategy,
+            test_evaluation_strategy,
+            parent_selection_strategy,
+            mutation_strategy,
+            offspring_selection_strategy)
 
         epoch += 1
         handle_backup(backup_strategy, epoch, tmp_population)
-        handle_epoch_summary(epoch_summary_strategy, epoch, phenotype_values, start_time, end_time)
+        handle_epoch_summary(epoch_summary_strategy, epoch, train_phenotype_values, test_phenotype_values, start_time,
+                             end_time)
 
     return tmp_population
